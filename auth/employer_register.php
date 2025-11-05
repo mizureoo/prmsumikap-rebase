@@ -1,5 +1,5 @@
 <?php include __DIR__ . '/../includes/header.php'; ?>
-<?php include __DIR__ . '/../database/db_prmsumikap.php'; ?>
+<?php include __DIR__ . '/../database/prmsumikap_db.php'; ?>
 
 <div class="container mt-5" style="max-width: 500px;">
   <div class="card shadow border-0">

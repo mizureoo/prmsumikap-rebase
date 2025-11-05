@@ -29,30 +29,37 @@ $accountType = ucfirst($_SESSION['role']);
 
     <?php include '../includes/sidebar.php'; ?>
 
-<!-- MAIN CONTENT -->
 <div id="main-content">
+
+    <!-- Welcome / Header + Stats -->
     <div class="welcome-card p-4 p-md-5 mb-4">
-        <h1 class="display-5 fw-bold mb-3">Find your part-time job</h1>
-        <p class="fs-5 mb-4">Discover opportunities from local businesses in your area</p>
+        <h1 class="display-5 fw-bold mb-2">Saved Jobs</h1>
+        <p class="fs-5 mb-4">Jobs you've bookmarked for later</p>
 
-        <form method="GET" class="d-flex flex-column flex-md-row gap-3">
-            <div class="input-group shadow-sm rounded-pill overflow-hidden flex-grow-1">
-                <span class="input-group-text bg-white border-0"><i class="bi bi-search"></i></span>
-                <input type="text" name="query" class="form-control border-0" placeholder="Search jobs by title, company, or location" value="<?php echo isset($_GET['query']) ? htmlspecialchars($_GET['query']) : ''; ?>">
-            </div>
-            <button type="submit" class="btn text-white rounded-pill px-4 py-2 fw-bold mt-2 mt-md-0" style="background: #0a4da2;">Search</button>
-        </form>
-    </div>
-
-    <!-- Job Listings -->
-    <div class="row g-4">
-        <div class="col-12">
-            <div class="text-center p-5 bg-white rounded-3 shadow-sm">
-                <i class="bi bi-briefcase display-4 text-muted"></i>
-                <p class="mt-3 mb-0 text-muted">No job postings available yet.</p>
+        <!-- Stats inside welcome-card -->
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="stat-card d-flex align-items-center gap-3 p-3 shadow-sm bg-white bg-opacity-75">
+                    <i class="bi bi-file-earmark-text-fill fs-2 text-black"></i>
+                    <div>
+                        <h6 class="text-black opacity-75 mb-1">Total Saved</h6>
+                        <h3 class="fw-bold mb-0 text-black">0</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Applications List -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="text-center p-5 bg-white rounded-3 shadow-sm">
+                <i class="bi bi-clipboard-check display-4 text-muted"></i>
+                <p class="mt-3 text-muted">You haven’t saved any jobs yet.</p>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

@@ -26,11 +26,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $base_url = "http://localhost/prmsumikap";
 
             if ($user['role'] === 'student') {
-                header("Location: {$base_url}/student/dashboard.php");
+                header("Location: {$base_url}/employee/dashboard.php");
                 exit;
             } 
             else if ($user['role'] === 'employer') {
-                header("Location: {$base_url}/employer/employer_dashboard.php");
+                header("Location: {$base_url}/employer/dashboard.php");
                 exit;
             } 
             else {
