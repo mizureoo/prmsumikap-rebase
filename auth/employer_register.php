@@ -5,7 +5,7 @@
   <div class="card shadow border-0 px-3">
     <div class="card-body">
     <h3 class="text-center mt-3 mb-4 text-primary fw-bold d-flex align-items-center justify-content-center">
-      <i class="bi bi-building-fill me-2"></i>
+      <i class="bi bi-building-fill me-2 fs-3"></i>
       Employer Registration
     </h3>
 

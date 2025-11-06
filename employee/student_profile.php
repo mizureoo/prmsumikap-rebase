@@ -23,6 +23,9 @@ $studentEmail = $_SESSION['email'] ?? 'example@email.com';
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
 
+<!-- Tab Icon -->
+<link rel="icon" type="image/png" sizes="512x512" href="/prmsumikap/assets/images/favicon.png">
+
 <!-- Custom CSS -->
 <link rel="stylesheet" href="../assets/css/layout.css">
 <link rel="stylesheet" href="../assets/css/sidebar.css">
