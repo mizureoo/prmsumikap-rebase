@@ -1,5 +1,6 @@
 <?php
 session_start();
+include __DIR__ . '/../database/prmsumikap_db.php';
 
 // Check if the user is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'employer') {
@@ -39,9 +40,9 @@ $accountType = ucfirst($_SESSION['role']);
             <h1 class="display-5 fw-bold mt-2">Hello, <?php echo htmlspecialchars($employerName); ?>!</h1>
             <p class="fs-5">Ready to find your next great hire?</p>
             <div class="d-flex flex-wrap gap-3 mt-3">
-                <button class="btn btn-light text-primary rounded-pill px-4 py-2 fw-bold">
-                     <i class="bi bi-plus-circle me-2"></i> Post a New Job
-                </button>
+                 <a href="post_job.php" class="btn btn-light text-primary rounded-pill px-4 py-2 fw-bold">
+                    <i class="bi bi-plus-circle me-2"></i> Post a New Job
+                </a>
                 <a href="manage_jobs.php" class="btn btn-outline-light rounded-pill fw-semibold px-4 py-2">
                     <i class="bi bi-briefcase me-2"></i> Manage Posted Jobs
                 </a>
