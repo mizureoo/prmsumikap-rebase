@@ -42,7 +42,9 @@ $accountType = ucfirst($_SESSION['role']);
                 <a href="manage_jobs.php" class="btn btn-outline-light rounded-pill fw-semibold px-4 py-2">
                     <i class="bi bi-briefcase me-2"></i> Manage Posted Jobs
                 </a>
-                <button class="btn btn-light rounded-pill px-4 py-2 opacity-50">Complete Profile</button>
+                <a href="profile.php" class="btn btn-light rounded-pill px-4 py-2 opacity-50">
+                    Complete Profile
+                </a>
             </div>
         </div>
 

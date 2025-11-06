@@ -73,7 +73,7 @@ $menuItems = $isStudent ? $studentMenu : ($isEmployer ? $employerMenu : []);
             aria-labelledby="accountDropdown" 
             style="border-radius: 0.75rem; min-width: 180px;">
           <li>
-            <a class="dropdown-item d-flex align-items-center gap-2 rounded px-3 py-2" href="<?php echo $isStudent ? 'studentprofile.php' : 'profile.php'; ?>">
+            <a class="dropdown-item d-flex align-items-center gap-2 rounded px-3 py-2" href="<?php echo $isStudent ? 'student_profile.php' : 'profile.php'; ?>">
               <i class="bi bi-person-fill"></i> My Profile
             </a>
           </li>

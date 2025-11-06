@@ -32,7 +32,7 @@ $accountType = ucfirst($_SESSION['role']);
 <div id="main-content">
 
     <!-- Welcome / Header + Stats -->
-    <div class="welcome-card p-4 p-md-5 mb-4">
+    <div class="welcome-card mb-4">
         <h1 class="display-5 fw-bold mb-2">Saved Jobs</h1>
         <p class="fs-5 mb-4">Jobs you've bookmarked for later</p>
 
@@ -55,7 +55,8 @@ $accountType = ucfirst($_SESSION['role']);
         <div class="col-12">
             <div class="text-center p-5 bg-white rounded-3 shadow-sm">
                 <i class="bi bi-clipboard-check display-4 text-muted"></i>
-                <p class="mt-3 text-muted">You haven’t saved any jobs yet.</p>
+                <h4 class="fw-semibold">No applications yet</h4>
+                <p class="mt-3 text-muted">Save jobs while browsing to review them later</p>
             </div>
         </div>
     </div>

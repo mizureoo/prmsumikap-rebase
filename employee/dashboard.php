@@ -28,7 +28,7 @@ $accountType = ucfirst($_SESSION['role']);
 </head>
 <body>
 
-    <?php include __DIR__. '/../includes/sidebar.php'; ?>
+    <?php include '../includes/sidebar.php'; ?>
 
     <div id="main-content">
         <div class="welcome-card mb-4">
@@ -36,10 +36,13 @@ $accountType = ucfirst($_SESSION['role']);
             <h1 class="display-5 fw-bold mt-2">Hello, <?php echo htmlspecialchars($studentName); ?>!</h1>
             <p class="fs-5">Ready to find your next opportunity?</p>
             <div class="d-flex flex-wrap gap-3 mt-3">
-                <button class="btn btn-light text-primary rounded-pill px-4 py-2 fw-bold">
+                <a href="browse_job.php" class="btn btn-light text-primary rounded-pill px-4 py-2 fw-bold">
                     <i class="bi bi-search me-2"></i> Browse Jobs
-                </button>
-                <button class="btn btn-light rounded-pill px-4 py-2 opacity-50">Complete Profile</button>
+                </a>
+
+                <a href="student_profile.php" class="btn btn-light rounded-pill px-4 py-2 opacity-50">
+                    Complete Profile
+                </a>
             </div>
         </div>
 
@@ -82,7 +85,7 @@ $accountType = ucfirst($_SESSION['role']);
             <div class="col-lg-8">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="fw-bold"><i class="bi bi-clock-history me-2"></i> Recent Applications</h4>
-                    <a href="#" class="fw-bold text-decoration-none">View All <i class="bi bi-arrow-right"></i></a>
+                    <a href="job_applications.php" class="fw-bold text-decoration-none">View All <i class="bi bi-arrow-right"></i></a>
                 </div>
                 <div class="text-center p-5 bg-white rounded-3 shadow-sm">
                     <i class="bi bi-file-earmark-text display-4 text-muted"></i>
@@ -92,9 +95,10 @@ $accountType = ucfirst($_SESSION['role']);
             <div class="col-lg-4">
                 <h4 class="fw-bold mb-3"><i class="bi bi-star me-2"></i> For You</h4>
                 <div class="text-center p-4 bg-white rounded-3 shadow-sm">
-                    <button class="btn w-100 py-3 fw-bold text-white" style="background: linear-gradient(90deg, #11bfcb, #2575fc); border: none;">
+                    <a href="browse_job.php" class="btn w-100 py-3 fw-bold text-white" 
+                    style="background: linear-gradient(90deg, #11bfcb, #2575fc); border: none;">
                         View All Jobs <i class="bi bi-arrow-right"></i>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>

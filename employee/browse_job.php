@@ -31,7 +31,7 @@ $accountType = ucfirst($_SESSION['role']);
 
 <!-- MAIN CONTENT -->
 <div id="main-content">
-    <div class="welcome-card p-4 p-md-5 mb-4">
+    <div class="welcome-card mb-4">
         <h1 class="display-5 fw-bold mb-3">Find your part-time job</h1>
         <p class="fs-5 mb-4">Discover opportunities from local businesses in your area</p>
 
