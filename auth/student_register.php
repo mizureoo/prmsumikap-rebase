@@ -6,10 +6,13 @@ include __DIR__ . '/../database/prmsumikap_db.php';
 $role = $_GET['role'] ?? 'student';
 ?>
 
-<div class="container mt-5" style="max-width: 500px;">
-  <div class="card shadow border-0">
+<div class="container mt-3" style="max-width: 500px;">
+  <div class="card shadow border-0 px-3">
     <div class="card-body">
-      <h3 class="text-center mb-4 text-primary fw-bold">Student Registration</h3>
+    <h3 class="text-center mt-3 mb-4 text-primary fw-bold d-flex align-items-center justify-content-center">
+      <i class="bi bi-person-fill me-2"></i>
+      Student Registration
+    </h3>
 
       <?php if (isset($_GET['error'])): ?>
         <div class="alert alert-danger"><?= htmlspecialchars($_GET['error']) ?></div>

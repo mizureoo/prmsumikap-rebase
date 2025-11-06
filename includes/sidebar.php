@@ -33,7 +33,10 @@ $menuItems = $isStudent ? $studentMenu : ($isEmployer ? $employerMenu : []);
 <div id="sidebar" class="d-flex flex-column p-3">
     <div class="mb-4 pb-3 border-bottom d-flex flex-column">
         <div class="d-flex align-items-center mb-1">
-            <i class="bi bi-briefcase-fill fs-4 me-2" style="color: #2575fc;"></i>
+            <img src="/prmsumikap/assets/images/PRMSUmikapLogo.png" 
+                alt="PRMSUmikap Logo" 
+                style="width:32px; height:32px; object-fit:contain;" 
+                class="me-2">
             <span class="fs-5 fw-bold">PRMSUmikap</span>
         </div>
     </div>

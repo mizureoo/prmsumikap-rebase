@@ -11,6 +11,7 @@
 
   <!-- Bootstrap 5 CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <style>
@@ -46,7 +47,10 @@
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
     <div class="container">
-      <a class="navbar-brand" href="/prmsumikap/welcome_page.php">PRMSUmikap</a>
+    <a class="navbar-brand d-flex align-items-center" href="/prmsumikap/welcome_page.php">
+      <img src="/prmsumikap/assets/images/PRMSUmikapLogo.png" alt="PRMSUmikap Logo" width="35" height="35" class="me-2" style="object-fit: contain;">
+      <span>PRMSUmikap</span>
+    </a>
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>

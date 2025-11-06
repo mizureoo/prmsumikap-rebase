@@ -4,7 +4,10 @@
 
 <div class="d-flex justify-content-center align-items-center bg-light" style="min-height: calc(100vh - 150px);">
   <div class="card shadow border-0 p-4" style="width: 400px; border-radius: 15px;">
-    <h2 class="text-center mb-4 text-primary fw-bold">LOGIN</h2>
+  <h2 class="text-center mb-4 text-primary fw-bold d-flex align-items-center justify-content-center">
+    <i class="bi bi-person-circle me-2"></i>
+    LOGIN
+  </h2>
 
     <?php
     // ✅ Display messages
