@@ -4,13 +4,15 @@ if (!isset($_SESSION['user_id'])) {
     exit('Unauthorized access');
 }
 
-// 🩵 NEW: map the logged-in user_id to the actual employer_id from employers_profile
+// Get the employer_id from employers_profile using the logged-in user_id
 $stmt = $pdo->prepare("SELECT employer_id FROM employers_profile WHERE user_id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $employer_id = $stmt->fetchColumn();
 
+// If no employer profile exists yet, use the user_id directly as employer_id
+// (assuming jobs table uses user_id as employer_id)
 if (!$employer_id) {
-    exit('Employer profile not found for this user.');
+    $employer_id = $_SESSION['user_id'];
 }
 
 try {
@@ -48,7 +50,7 @@ try {
 
     // 4️⃣ Recent Posted Jobs
     $stmt = $pdo->prepare("
-        SELECT job_title, date_posted, status
+        SELECT job_title, DATE_FORMAT(date_posted, '%M %d, %Y') as date_posted, status
         FROM jobs
         WHERE employer_id = ?
         ORDER BY date_posted DESC
@@ -58,14 +60,20 @@ try {
     $recentJobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // 5️⃣ Recent Applicants
+    // FIXED: Changed applications.user_id to applications.student_id
     $stmt = $pdo->prepare("
-        SELECT users.name, jobs.job_title, applications.status, applications.date_applied
+        SELECT 
+            users.name, 
+            jobs.job_title, 
+            applications.status, 
+            DATE_FORMAT(applications.date_applied, '%M %d, %Y') as date_applied,
+            applications.application_id
         FROM applications
         INNER JOIN jobs ON applications.job_id = jobs.job_id
-        INNER JOIN users ON applications.user_id = users.user_id
+        INNER JOIN users ON applications.student_id = users.user_id
         WHERE jobs.employer_id = ?
         ORDER BY applications.date_applied DESC
-        LIMIT 3
+        LIMIT 5
     ");
     $stmt->execute([$employer_id]);
     $recentApplicants = $stmt->fetchAll(PDO::FETCH_ASSOC);

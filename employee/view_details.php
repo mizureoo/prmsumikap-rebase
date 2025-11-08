@@ -19,15 +19,19 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $job_id = intval($_GET['id']);
 
-// SIMPLE AND RELIABLE APPROACH
+// FIXED: Changed the JOIN to use user_id instead of employer_id
 try {
     // First get basic job info
     $stmt = $pdo->prepare("
-        SELECT j.*, e.company_name, e.contact_person, e.email as company_email, 
-               e.phone as company_phone, e.company_description, e.address as company_address
-        FROM jobs j 
-        LEFT JOIN employers_profile e ON j.employer_id = e.employer_id 
-        WHERE j.job_id = ? AND j.status = 'Active'
+        SELECT jobs.*, 
+               employers_profile.company_name, 
+               employers_profile.contact_person, 
+               employers_profile.contact_number as company_phone, 
+               employers_profile.company_description, 
+               employers_profile.company_address
+        FROM jobs 
+        LEFT JOIN employers_profile ON jobs.employer_id = employers_profile.user_id 
+        WHERE jobs.job_id = ? AND jobs.status = 'Active'
     ");
     $stmt->execute([$job_id]);
     $job = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -150,7 +154,7 @@ $error = $_GET['error'] ?? '';
                     </ol>
                 </nav>
                 <h1 class="display-6 fw-bold mb-2"><?php echo htmlspecialchars($job['job_title']); ?></h1>
-                <h3 class="mb-3"><?php echo htmlspecialchars($job['company_name']); ?></h3>
+                <h3 class="mb-3"><?php echo htmlspecialchars($job['company_name'] ?? 'Company Name'); ?></h3>
                 <div class="d-flex flex-wrap gap-3">
                     <span class="badge bg-light text-dark fs-6">
                         <i class="bi bi-geo-alt me-1"></i><?php echo htmlspecialchars($job['job_location']); ?>
@@ -239,7 +243,7 @@ $error = $_GET['error'] ?? '';
             <!-- About Company -->
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
-                    <h4 class="fw-bold mb-0"><i class="bi bi-building me-2"></i>About <?php echo htmlspecialchars($job['company_name']); ?></h4>
+                    <h4 class="fw-bold mb-0"><i class="bi bi-building me-2"></i>About <?php echo htmlspecialchars($job['company_name'] ?? 'Company'); ?></h4>
                 </div>
                 <div class="card-body">
                     <?php if (!empty($job['company_description'])): ?>
@@ -327,6 +331,12 @@ $error = $_GET['error'] ?? '';
                                 <div class="col-12">
                                     <small class="text-muted d-block">Contact Person</small>
                                     <strong><?php echo htmlspecialchars($job['contact_person']); ?></strong>
+                                </div>
+                                <?php endif; ?>
+                                <?php if(!empty($job['company_phone'])): ?>
+                                <div class="col-12">
+                                    <small class="text-muted d-block">Contact Number</small>
+                                    <strong><?php echo htmlspecialchars($job['company_phone']); ?></strong>
                                 </div>
                                 <?php endif; ?>
                             </div>

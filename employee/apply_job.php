@@ -18,12 +18,12 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $job_id = intval($_GET['id']);
 
-// Fetch job details
+// Fetch job details including employer_id
 try {
     $stmt = $pdo->prepare("
-        SELECT j.*, e.company_name, e.contact_person
+        SELECT j.*, e.company_name, e.contact_person, j.employer_id
         FROM jobs j 
-        LEFT JOIN employers_profile e ON j.employer_id = e.employer_id 
+        LEFT JOIN employers_profile e ON j.employer_id = e.user_id 
         WHERE j.job_id = ? AND j.status = 'Active'
     ");
     $stmt->execute([$job_id]);
@@ -50,11 +50,12 @@ try {
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
+        // Insert application with employer's user_id
         $insertStmt = $pdo->prepare("
-            INSERT INTO applications (student_id, job_id, status) 
-            VALUES (?, ?, 'Pending')
+            INSERT INTO applications (student_id, job_id, user_id, status, date_applied) 
+            VALUES (?, ?, ?, 'Pending', NOW())
         ");
-        $insertStmt->execute([$student_id, $job_id]);
+        $insertStmt->execute([$student_id, $job_id, $job['employer_id']]);
         
         header("Location: job_applications.php?success=" . urlencode("Application submitted successfully!"));
         exit;
@@ -62,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($e->getCode() == 23000) { // Duplicate entry
             $error = "You have already applied for this position.";
         } else {
-            $error = "Failed to submit application. Please try again.";
+            $error = "Failed to submit application. Please try again. Error: " . $e->getMessage();
         }
     }
 }
