@@ -11,7 +11,24 @@ require_once '../database/prmsumikap_db.php';
 
 $studentName = $_SESSION['name'];  
 $accountType = ucfirst($_SESSION['role']);
-$student_id = $_SESSION['user_id'];
+
+// Get the actual student_id from students_profile table
+try {
+    $stmt = $pdo->prepare("SELECT student_id FROM students_profile WHERE user_id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $student_profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$student_profile) {
+        // If no student profile exists, set to 0 to avoid errors but show empty state
+        $student_id = 0;
+    } else {
+        $student_id = $student_profile['student_id'];
+    }
+} catch(PDOException $e) {
+    // Fallback to avoid breaking the page
+    $student_id = 0;
+    error_log("Applications page student profile error: " . $e->getMessage());
+}
 
 // Fetch application statistics
 try {

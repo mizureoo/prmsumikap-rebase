@@ -8,8 +8,23 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
 
 require_once '../database/prmsumikap_db.php';
 
-$student_id = $_SESSION['user_id'];
-$studentName = $_SESSION['name'];
+// Get the actual student_id from students_profile
+try {
+    $stmt = $pdo->prepare("SELECT student_id FROM students_profile WHERE user_id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $student_profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$student_profile) {
+        header("Location: browse_job.php?error=" . urlencode("Student profile not found. Please complete your profile first."));
+        exit;
+    }
+    
+    $student_id = $student_profile['student_id'];
+    $studentName = $_SESSION['name'];
+} catch(PDOException $e) {
+    header("Location: browse_job.php?error=" . urlencode("Database error: Could not find student profile."));
+    exit;
+}
 
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     header("Location: browse_job.php?error=" . urlencode("No job specified."));
@@ -38,7 +53,7 @@ try {
     exit;
 }
 
-// Check if already applied
+// Check if already applied (using correct student_id)
 try {
     $checkStmt = $pdo->prepare("SELECT * FROM applications WHERE student_id = ? AND job_id = ?");
     $checkStmt->execute([$student_id, $job_id]);
@@ -47,7 +62,7 @@ try {
     $existingApplication = null;
 }
 
-// Handle form submission - FIXED INSERT with correct columns
+// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // Check again if already applied (in case of double submission)
@@ -55,16 +70,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $checkStmt->execute([$student_id, $job_id]);
         
         if ($checkStmt->fetchColumn() == 0) {
-            // Insert application with ALL required columns
+            // Insert application with correct IDs
             $insertStmt = $pdo->prepare("
                 INSERT INTO applications (student_id, job_id, status, date_applied, employer_id, user_id) 
                 VALUES (?, ?, 'Pending', NOW(), ?, ?)
             ");
             $insertStmt->execute([
-                $student_id, 
+                $student_id,           // Correct student_id from students_profile
                 $job_id, 
-                $job['employer_id'], // employer_id from jobs table
-                $job['employer_id']  // user_id (assuming it's the same as employer_id)
+                $job['employer_id'],   // employer_id from jobs table
+                $_SESSION['user_id']   // user_id from session
             ]);
             
             header("Location: job_applications.php?success=" . urlencode("Application submitted successfully!"));

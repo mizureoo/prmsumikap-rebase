@@ -9,7 +9,22 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
 // Include database connection
 require_once '../database/prmsumikap_db.php';
 
-$student_id = $_SESSION['user_id'];
+try {
+    $stmt = $pdo->prepare("SELECT student_id FROM students_profile WHERE user_id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $student_profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$student_profile) {
+        // If no student profile exists, set to 0 to avoid errors
+        $student_id = 0;
+    } else {
+        $student_id = $student_profile['student_id'];
+    }
+} catch(PDOException $e) {
+    // Fallback to avoid breaking the page
+    $student_id = 0;
+    error_log("Job details page student profile error: " . $e->getMessage());
+}
 
 // Get job ID from URL
 if (!isset($_GET['id']) || empty($_GET['id'])) {

@@ -12,7 +12,24 @@ require_once '../database/prmsumikap_db.php';
 
 $studentName = $_SESSION['name'];  
 $accountType = ucfirst($_SESSION['role']);
-$student_id = $_SESSION['user_id'];
+
+// Get the actual student_id from students_profile table
+try {
+    $stmt = $pdo->prepare("SELECT student_id FROM students_profile WHERE user_id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $student_profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$student_profile) {
+        // If no student profile exists, set to 0 to avoid errors but show empty dashboard
+        $student_id = 0;
+    } else {
+        $student_id = $student_profile['student_id'];
+    }
+} catch(PDOException $e) {
+    // Fallback to avoid breaking the dashboard
+    $student_id = 0;
+    error_log("Dashboard student profile error: " . $e->getMessage());
+}
 
 // Fetch dashboard statistics
 try {
@@ -32,7 +49,9 @@ try {
     $jobOffers = $offersStmt->fetch(PDO::FETCH_ASSOC)['offers'];
 
     // Saved jobs count (if you have a saved_jobs table)
-    $savedJobs = 0; // Default to 0
+    $savedStmt = $pdo->prepare("SELECT COUNT(*) as saved FROM saved_jobs WHERE student_id = ?");
+    $savedStmt->execute([$student_id]);
+    $savedJobs = $savedStmt->fetch(PDO::FETCH_ASSOC)['saved'];
 
     // Fetch recent applications (last 3)
     $recentStmt = $pdo->prepare("
