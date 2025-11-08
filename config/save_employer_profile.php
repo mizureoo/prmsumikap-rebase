@@ -40,7 +40,7 @@ if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_
         $allowedMimes = ['image/jpeg','image/png'];
         
         if (in_array($mimeType, $allowedMimes)) {
-            $uploadsDir = __DIR__ . '/../assets/images/profile_pics/';
+            $uploadsDir = __DIR__ . '/../uploads/company_pics/';
             
             // Create directory if it doesn't exist
             if (!is_dir($uploadsDir)) {
@@ -51,7 +51,7 @@ if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_
             $destPath = $uploadsDir . $newFileName;
 
             if (move_uploaded_file($fileTmpPath, $destPath)) {
-                $profilePicPath = 'assets/images/profile_pics/'.$newFileName;
+                $profilePicPath = '/../uploads/company_pics/'.$newFileName;
                 
                 // Delete old profile picture if exists
                 try {

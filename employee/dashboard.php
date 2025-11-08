@@ -248,7 +248,7 @@ try {
                                     <span class="salary-range">
                                         ₱<?php echo number_format($job['min_salary']); ?>+
                                     </span>
-                                    <a href="job_details.php?id=<?php echo $job['job_id']; ?>" class="btn btn-sm btn-outline-primary">View</a>
+                                    <a href="view_details.php?id=<?php echo $job['job_id']; ?>" class="btn btn-sm btn-outline-primary">View</a>
                                 </div>
                             </div>
                         </div>

@@ -23,7 +23,7 @@ try {
     $stmt = $pdo->prepare("
         SELECT j.*, e.company_name, e.contact_person, j.employer_id
         FROM jobs j 
-        LEFT JOIN employers_profile e ON j.employer_id = e.user_id 
+        LEFT JOIN employers_profile e ON j.employer_id = e.employer_id 
         WHERE j.job_id = ? AND j.status = 'Active'
     ");
     $stmt->execute([$job_id]);
@@ -47,23 +47,37 @@ try {
     $existingApplication = null;
 }
 
-// Handle form submission
+// Handle form submission - FIXED INSERT with correct columns
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Insert application with employer's user_id
-        $insertStmt = $pdo->prepare("
-            INSERT INTO applications (student_id, job_id, user_id, status, date_applied) 
-            VALUES (?, ?, ?, 'Pending', NOW())
-        ");
-        $insertStmt->execute([$student_id, $job_id, $job['employer_id']]);
+        // Check again if already applied (in case of double submission)
+        $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM applications WHERE student_id = ? AND job_id = ?");
+        $checkStmt->execute([$student_id, $job_id]);
         
-        header("Location: job_applications.php?success=" . urlencode("Application submitted successfully!"));
-        exit;
+        if ($checkStmt->fetchColumn() == 0) {
+            // Insert application with ALL required columns
+            $insertStmt = $pdo->prepare("
+                INSERT INTO applications (student_id, job_id, status, date_applied, employer_id, user_id) 
+                VALUES (?, ?, 'Pending', NOW(), ?, ?)
+            ");
+            $insertStmt->execute([
+                $student_id, 
+                $job_id, 
+                $job['employer_id'], // employer_id from jobs table
+                $job['employer_id']  // user_id (assuming it's the same as employer_id)
+            ]);
+            
+            header("Location: job_applications.php?success=" . urlencode("Application submitted successfully!"));
+            exit;
+        } else {
+            $error = "You have already applied for this position.";
+        }
     } catch(PDOException $e) {
+        error_log("Application error: " . $e->getMessage());
         if ($e->getCode() == 23000) { // Duplicate entry
             $error = "You have already applied for this position.";
         } else {
-            $error = "Failed to submit application. Please try again. Error: " . $e->getMessage();
+            $error = "Failed to submit application. Please try again.";
         }
     }
 }
@@ -110,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 <div class="col-md-4 text-md-end">
-                    <a href="job_details.php?id=<?php echo $job_id; ?>" class="btn btn-outline-light">
+                    <a href="view_details.php?id=<?php echo $job_id; ?>" class="btn btn-outline-light">
                         <i class="bi bi-eye me-1"></i>View Job Details
                     </a>
                 </div>
@@ -158,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
 
                                 <div class="d-flex gap-2 justify-content-end mt-4">
-                                    <a href="job_details.php?id=<?php echo $job_id; ?>" class="btn btn-outline-secondary">
+                                    <a href="view_details.php?id=<?php echo $job_id; ?>" class="btn btn-outline-secondary">
                                         <i class="bi bi-arrow-left me-1"></i>Back to Job
                                     </a>
                                     <button type="submit" class="btn btn-primary">

@@ -19,19 +19,20 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $job_id = intval($_GET['id']);
 
-// FIXED: Changed the JOIN to use user_id instead of employer_id
+// FIXED: Query with correct profile_pic field name
 try {
     // First get basic job info
     $stmt = $pdo->prepare("
-        SELECT jobs.*, 
-               employers_profile.company_name, 
-               employers_profile.contact_person, 
-               employers_profile.contact_number as company_phone, 
-               employers_profile.company_description, 
-               employers_profile.company_address
-        FROM jobs 
-        LEFT JOIN employers_profile ON jobs.employer_id = employers_profile.user_id 
-        WHERE jobs.job_id = ? AND jobs.status = 'Active'
+        SELECT j.*, 
+               e.company_name, 
+               e.contact_person, 
+               e.contact_number as company_phone, 
+               e.company_description, 
+               e.company_address,
+               e.profile_pic as company_logo
+        FROM jobs j 
+        LEFT JOIN employers_profile e ON j.employer_id = e.employer_id 
+        WHERE j.job_id = ? AND j.status = 'Active'
     ");
     $stmt->execute([$job_id]);
     $job = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -45,13 +46,13 @@ try {
     $appliedStmt = $pdo->prepare("SELECT COUNT(*) as count FROM applications WHERE job_id = ? AND student_id = ?");
     $appliedStmt->execute([$job_id, $student_id]);
     $appliedResult = $appliedStmt->fetch(PDO::FETCH_ASSOC);
-    $job['has_applied'] = $appliedResult['count'];
+    $has_applied = $appliedResult['count'];
 
     // Check if saved
     $savedStmt = $pdo->prepare("SELECT COUNT(*) as count FROM saved_jobs WHERE job_id = ? AND student_id = ?");
     $savedStmt->execute([$job_id, $student_id]);
     $savedResult = $savedStmt->fetch(PDO::FETCH_ASSOC);
-    $job['is_saved'] = $savedResult['count'];
+    $is_saved = $savedResult['count'];
 
 } catch(PDOException $e) {
     error_log("Job details error: " . $e->getMessage());
@@ -87,39 +88,133 @@ $error = $_GET['error'] ?? '';
     color: white;
     border-radius: 15px;
 }
-.company-logo {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
+
+/* FIXED: Logo container with proper image containment */
+.company-logo-container {
+    width: 90px;
+    height: 90px;
     border-radius: 12px;
     border: 3px solid white;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    display: inline-block; /* Simple inline block */
+    position: relative;
 }
+
+.company-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    padding: 8px;
+}
+
+.fallback-logo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+}
+
 .job-meta-card {
     border-left: 4px solid #2575fc;
 }
 .salary-display {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: bold;
     color: #198754;
 }
+
+/* Improved spacing and typography */
+.card {
+    margin-bottom: 1.5rem;
+}
+.card-header {
+    padding: 1.25rem 1.5rem;
+}
+.card-body {
+    padding: 1.5rem;
+}
+.card-header h4 {
+    font-size: 1.3rem;
+    margin-bottom: 0;
+}
+
+/* Improved bullet styles with better spacing */
 .requirements-list, .responsibilities-list {
     list-style: none;
     padding-left: 0;
+    margin-bottom: 0;
 }
 .requirements-list li, .responsibilities-list li {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #eee;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+    padding-left: 2rem;
+    line-height: 1.5;
 }
 .requirements-list li:last-child, .responsibilities-list li:last-child {
     border-bottom: none;
 }
 .requirements-list li::before, .responsibilities-list li::before {
     content: "•";
-    color: #2575fc;
+    color: #6c757d;
     font-weight: bold;
-    display: inline-block;
-    width: 1em;
-    margin-left: -1em;
+    font-size: 1.4rem;
+    position: absolute;
+    left: 0.5rem;
+    top: 0.6rem;
+}
+
+/* Better text sizing */
+.job-description {
+    line-height: 1.7;
+    font-size: 1.05rem;
+}
+.display-6 {
+    font-size: 2.2rem;
+}
+h3 {
+    font-size: 1.5rem;
+}
+
+/* Improved badge spacing */
+.badge {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+}
+
+/* Better button spacing */
+.btn-lg {
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+/* Meta info improvements */
+.job-meta-card .card-body {
+    padding: 1.25rem;
+}
+.job-meta-card .row > div {
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #e9ecef;
+}
+.job-meta-card .row > div:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+/* Ensure image never breaks layout */
+.company-logo-img {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
 }
 </style>
 </head>
@@ -153,23 +248,39 @@ $error = $_GET['error'] ?? '';
                         <li class="breadcrumb-item active text-white" aria-current="page">Job Details</li>
                     </ol>
                 </nav>
-                <h1 class="display-6 fw-bold mb-2"><?php echo htmlspecialchars($job['job_title']); ?></h1>
-                <h3 class="mb-3"><?php echo htmlspecialchars($job['company_name'] ?? 'Company Name'); ?></h3>
+                <h1 class="display-6 fw-bold mb-3"><?php echo htmlspecialchars($job['job_title']); ?></h1>
+                <h3 class="mb-4"><?php echo htmlspecialchars($job['company_name'] ?? 'Company Name'); ?></h3>
                 <div class="d-flex flex-wrap gap-3">
-                    <span class="badge bg-light text-dark fs-6">
+                    <span class="badge bg-light text-dark">
                         <i class="bi bi-geo-alt me-1"></i><?php echo htmlspecialchars($job['job_location']); ?>
                     </span>
-                    <span class="badge bg-light text-dark fs-6">
+                    <span class="badge bg-light text-dark">
                         <i class="bi bi-clock me-1"></i><?php echo htmlspecialchars($job['job_type']); ?>
                     </span>
-                    <span class="badge bg-light text-dark fs-6">
+                    <span class="badge bg-light text-dark">
                         <i class="bi bi-laptop me-1"></i><?php echo htmlspecialchars($job['work_arrangement']); ?>
                     </span>
                 </div>
             </div>
             <div class="col-md-4 text-center text-md-end">
-                <div class="company-logo bg-light d-inline-flex align-items-center justify-content-center">
-                    <i class="bi bi-building fs-1 text-muted"></i>
+                <!-- FIXED: Logo container with proper image containment -->
+                <div class="company-logo-container">
+                    <?php if (!empty($job['company_logo'])): ?>
+                        <?php
+                        $corrected_path = str_replace('/../', '../', $job['company_logo']);
+                        ?>
+                        <img src="<?php echo htmlspecialchars($corrected_path); ?>" 
+                             alt="<?php echo htmlspecialchars($job['company_name']); ?>" 
+                             class="company-logo-img"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="fallback-logo d-none">
+                            <i class="bi bi-building"></i>
+                        </div>
+                    <?php else: ?>
+                        <div class="fallback-logo">
+                            <i class="bi bi-building"></i>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -179,7 +290,7 @@ $error = $_GET['error'] ?? '';
         <!-- Main Job Content -->
         <div class="col-lg-8">
             <!-- Job Description -->
-            <div class="card shadow-sm mb-4">
+            <div class="card shadow-sm">
                 <div class="card-header bg-white">
                     <h4 class="fw-bold mb-0"><i class="bi bi-file-text me-2"></i>Job Description</h4>
                 </div>
@@ -191,7 +302,7 @@ $error = $_GET['error'] ?? '';
             </div>
 
             <!-- Responsibilities -->
-            <div class="card shadow-sm mb-4">
+            <div class="card shadow-sm">
                 <div class="card-header bg-white">
                     <h4 class="fw-bold mb-0"><i class="bi bi-list-task me-2"></i>Responsibilities</h4>
                 </div>
@@ -210,13 +321,13 @@ $error = $_GET['error'] ?? '';
                             ?>
                         </ul>
                     <?php else: ?>
-                        <p class="text-muted">No specific responsibilities listed.</p>
+                        <p class="text-muted mb-0">No specific responsibilities listed.</p>
                     <?php endif; ?>
                 </div>
             </div>
 
             <!-- Qualifications -->
-            <div class="card shadow-sm mb-4">
+            <div class="card shadow-sm">
                 <div class="card-header bg-white">
                     <h4 class="fw-bold mb-0"><i class="bi bi-list-check me-2"></i>Qualifications</h4>
                 </div>
@@ -235,7 +346,7 @@ $error = $_GET['error'] ?? '';
                             ?>
                         </ul>
                     <?php else: ?>
-                        <p class="text-muted">No specific qualifications listed.</p>
+                        <p class="text-muted mb-0">No specific qualifications listed.</p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -247,15 +358,15 @@ $error = $_GET['error'] ?? '';
                 </div>
                 <div class="card-body">
                     <?php if (!empty($job['company_description'])): ?>
-                        <p><?php echo nl2br(htmlspecialchars($job['company_description'])); ?></p>
+                        <p class="mb-3"><?php echo nl2br(htmlspecialchars($job['company_description'])); ?></p>
                     <?php else: ?>
-                        <p class="text-muted">No company description available.</p>
+                        <p class="text-muted mb-3">No company description available.</p>
                     <?php endif; ?>
                     
                     <?php if (!empty($job['company_address'])): ?>
-                        <div class="mt-3">
-                            <h6 class="fw-bold">Company Address:</h6>
-                            <p class="text-muted"><?php echo htmlspecialchars($job['company_address']); ?></p>
+                        <div class="mt-3 pt-3 border-top">
+                            <h6 class="fw-bold mb-2">Company Address:</h6>
+                            <p class="text-muted mb-0"><?php echo htmlspecialchars($job['company_address']); ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -266,26 +377,26 @@ $error = $_GET['error'] ?? '';
         <div class="col-lg-4">
             <!-- Salary & Quick Actions -->
             <div class="card shadow-sm sticky-top" style="top: 100px;">
-                <div class="card-header bg-white text-center">
+                <div class="card-header bg-white text-center py-3">
                     <h5 class="fw-bold mb-0">Job Details</h5>
                 </div>
                 <div class="card-body">
                     <!-- Salary -->
-                    <div class="text-center mb-4">
-                        <span class="salary-display">
+                    <div class="text-center mb-4 pb-3 border-bottom">
+                        <span class="salary-display d-block">
                             ₱<?php echo number_format($job['min_salary']); ?> - ₱<?php echo number_format($job['max_salary']); ?>
                         </span>
-                        <p class="text-muted">per month</p>
+                        <p class="text-muted mb-0">per month</p>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="d-grid gap-2 mb-4">
-                        <?php if($job['has_applied']): ?>
-                            <button class="btn btn-success btn-lg" disabled>
+                    <div class="d-grid gap-2 mb-4 pb-3 border-bottom">
+                        <?php if($has_applied): ?>
+                            <button class="btn btn-success btn-lg py-2" disabled>
                                 <i class="bi bi-check-circle me-2"></i>Already Applied
                             </button>
                         <?php else: ?>
-                            <a href="apply_job.php?id=<?php echo $job['job_id']; ?>" class="btn btn-primary btn-lg">
+                            <a href="apply_job.php?id=<?php echo $job['job_id']; ?>" class="btn btn-primary btn-lg py-2">
                                 <i class="bi bi-send me-2"></i>Apply Now
                             </a>
                         <?php endif; ?>
@@ -294,12 +405,12 @@ $error = $_GET['error'] ?? '';
                         <form method="POST" action="../employee/save_job_process.php" class="d-inline">
                             <input type="hidden" name="job_id" value="<?php echo $job['job_id']; ?>">
                             <input type="hidden" name="redirect_url" value="view_details.php?id=<?php echo $job['job_id']; ?>">
-                            <?php if($job['is_saved']): ?>
-                                <button type="submit" name="action" value="unsave" class="btn btn-outline-danger w-100">
+                            <?php if($is_saved): ?>
+                                <button type="submit" name="action" value="unsave" class="btn btn-outline-danger w-100 py-2">
                                     <i class="bi bi-bookmark-check-fill me-2"></i>Remove from Saved
                                 </button>
                             <?php else: ?>
-                                <button type="submit" name="action" value="save" class="btn btn-outline-primary w-100">
+                                <button type="submit" name="action" value="save" class="btn btn-outline-primary w-100 py-2">
                                     <i class="bi bi-bookmark me-2"></i>Save Job
                                 </button>
                             <?php endif; ?>
@@ -310,7 +421,7 @@ $error = $_GET['error'] ?? '';
                     <div class="job-meta-card card bg-light">
                         <div class="card-body">
                             <h6 class="fw-bold mb-3">Job Information</h6>
-                            <div class="row g-3">
+                            <div class="row g-0">
                                 <div class="col-12">
                                     <small class="text-muted d-block">Job Type</small>
                                     <strong><?php echo htmlspecialchars($job['job_type']); ?></strong>
@@ -344,7 +455,7 @@ $error = $_GET['error'] ?? '';
                     </div>
 
                     <!-- Back to Browse -->
-                    <div class="text-center mt-3">
+                    <div class="text-center mt-4 pt-3 border-top">
                         <a href="browse_job.php" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-arrow-left me-1"></i>Back to Jobs
                         </a>
