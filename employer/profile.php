@@ -1,11 +1,26 @@
 <?php
 session_start();
+include __DIR__ . '/../database/prmsumikap_db.php';
 
-// Check if the user is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'employer') {
     header("Location: ../auth/login.php?error=" . urlencode("Unauthorized access."));
     exit;
 }
+
+$employerId = $_SESSION['user_id'];
+
+// Fetch user info
+$stmt = $pdo->prepare("SELECT name, email FROM users WHERE user_id = ?");
+$stmt->execute([$employerId]);
+$userData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Fetch employer profile info
+$stmt = $pdo->prepare("SELECT company_name, company_address, contact_number, company_description, contact_person, profile_pic FROM employers_profile WHERE user_id = ?");
+$stmt->execute([$employerId]);
+$profile = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$companyName = $profile['company_name'] ?? 'Employer';
+$employerEmail = $userData['email'] ?? 'example@email.com';
 ?>
 
 <!DOCTYPE html>
@@ -15,95 +30,198 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'employer') {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Company Profile | PRMSUmikap</title>
 
-<!-- Bootstrap & Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
-
-<!-- Tab Icon -->
-<link rel="icon" type="image/png" sizes="512x512" href="/prmsumikap/assets/images/favicon.png">
-
-<!-- Custom CSS -->
+<link rel="icon" type="image/png" href="/prmsumikap/assets/images/favicon.png">
 <link rel="stylesheet" href="../assets/css/layout.css">
 <link rel="stylesheet" href="../assets/css/sidebar.css">
+
+<style>
+/* Centered popup alert */
+#successMessage {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1050;
+    min-width: 300px;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+</style>
 </head>
+
 <body>
 
-<?php include __DIR__. '/../includes/sidebar.php'; ?>
+<?php include __DIR__ . '/../includes/sidebar.php'; ?>
 
-<div id="main-content">
+<!-- Success Alert -->
+<div id="successMessage" class="alert alert-success alert-dismissible fade d-none" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>Profile successfully saved!
+    <button type="button" class="btn-close" onclick="hideSuccessMessage()"></button>
+</div>
+
+<div id="main-content" class="p-4">
 
     <!-- Header Section -->
-    <div class="welcome-card mb-4 d-flex align-items-center">
-        <div class="d-flex align-items-center gap-4">
-            <div class="position-relative">
-                <div class="bg-white rounded-circle p-4 d-inline-flex align-items-center justify-content-center" style="width:100px; height:100px;">
-                    <i class="bi bi-buildings text-primary fs-1"></i>
-                </div>
-                <button class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0">
-                    <i class="bi bi-upload"></i>
-                </button>
-            </div>
-            <div>
-                <h1 class="fw-bold text-white mb-1">Company Profile</h1>
-                <p class="text-white-50 mb-0"><?php echo htmlspecialchars($_SESSION['email'] ?? 'company@email.com'); ?></p>
-            </div>
+    <div class="welcome-card mb-4 d-flex align-items-center profile-saved">
+        <div class="position-relative me-4">
+            <img id="profilePreview" 
+                 src="<?= htmlspecialchars('../' . ($profile['profile_pic'] ?? 'assets/images/default-pfp.png')) ?>" 
+                 class="bg-white rounded-circle p-2 border" 
+                 style="width:100px; height:100px; object-fit:cover;">
+
+            <button type="button" class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0 border"
+                    onclick="document.getElementById('profilePicInput').click();">
+                <i class="bi bi-camera"></i>
+            </button>
+        </div>
+        <div>
+            <h2 class="fw-bold"><?= htmlspecialchars($companyName) ?></h2>
+            <p class="text-muted"><?= htmlspecialchars($employerEmail) ?></p>
         </div>
     </div>
 
-    <!-- Company Information Card -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="fw-bold mb-4"><i class="bi bi-file-earmark-text me-2"></i>Company Information</h5>
-            <form method="POST" action="">
+    <!-- Company Information Form -->
+    <form id="profileForm" enctype="multipart/form-data">
+        <!-- Hidden file input inside the form -->
+        <input type="file" id="profilePicInput" name="profile_pic" accept=".jpg,.jpeg,.png" class="d-none">
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-4"><i class="bi bi-file-earmark-text me-2"></i>Business Information</h5>
+
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="company_name" placeholder="e.g., Acme Corporation" required>
+                    <label class="form-label fw-semibold">Business Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="company_name" required value="<?= htmlspecialchars($profile['company_name'] ?? '') ?>">
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Industry</label>
-                    <input type="text" class="form-control" name="industry" placeholder="e.g., Technology, Healthcare, Finance">
+                    <label class="form-label fw-semibold">Contact Person <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="contact_person" required value="<?= htmlspecialchars($profile['contact_person'] ?? '') ?>">
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Website</label>
+                    <label class="form-label fw-semibold">Contact Number <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-0"><i class="bi bi-globe2"></i></span>
-                        <input type="url" class="form-control" name="website" placeholder="https://www.yourcompany.com">
+                        <span class="input-group-text">+63</span>
+                        <input type="tel" class="form-control" name="contact_number" 
+                            value="<?= htmlspecialchars($profile['contact_number'] ?? '') ?>" 
+                            placeholder="9123456789" 
+                            pattern="\d{10}" 
+                            maxlength="10"
+                            title="Please enter exactly 10 digits"
+                            required>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <label class="form-label fw-semibold">Company Description</label>
-                    <textarea class="form-control" rows="4" placeholder="Tell candidates about your company, culture, and mission..."></textarea>
+               <div class="mb-4">
+                    <label class="form-label fw-semibold">Business Description <span class="text-danger">*</span></label>
+                    <textarea id="companyDescription" class="form-control" name="company_description" rows="4" required
+                        placeholder="Tell candidates about your company..." minlength="50"><?= htmlspecialchars($profile['company_description'] ?? '') ?></textarea>
+                    <small id="charCountHelp" class="text-muted">Minimum 50 characters required.</small>
                 </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Office Locations Card -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="fw-bold mb-4"><i class="bi bi-geo-alt me-2"></i>Office Locations</h5>
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <input type="text" class="form-control" placeholder="Add an office location...">
-                <button class="btn btn-primary rounded-3"><i class="bi bi-plus-lg"></i></button>
+                <h6 class="fw-bold mb-3"><i class="bi bi-geo-alt me-2"></i>Address Information</h6>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Complete Address <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="company_address" rows="1" placeholder="Street, Barangay" required><?= htmlspecialchars($profile['company_address'] ?? '') ?></textarea>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">City/Municipality</label>
+                        <input type="text" class="form-control" name="city" value="Iba" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Province</label>
+                        <input type="text" class="form-control" name="province" value="Zambales" readonly>
+                    </div>
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn text-white fw-semibold py-3" style="background: linear-gradient(135deg, #6a11cb, #2575fc);">
+                        <i class="bi bi-save me-2"></i>Save Profile
+                    </button>
+                </div>
             </div>
-            <p class="text-muted text-center mb-0">No office locations added yet</p>
         </div>
-    </div>
-
-    <!-- Save Button -->
-    <div class="d-grid">
-        <button type="submit" class="btn text-white fw-semibold py-3" 
-                style="background: linear-gradient(135deg, #6a11cb, #2575fc);">
-            <i class="bi bi-save me-2"></i>Save Profile
-        </button>
-    </div>
-
+    </form>
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+function showSuccessMessage() {
+    const alertBox = document.getElementById('successMessage');
+    alertBox.classList.remove('d-none');
+    alertBox.classList.add('show');
+    setTimeout(() => hideSuccessMessage(), 3000);
+}
+
+function hideSuccessMessage() {
+    const alertBox = document.getElementById('successMessage');
+    alertBox.classList.remove('show');
+    alertBox.classList.add('d-none');
+}
+
+// AJAX form submission
+document.getElementById('profileForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    // Make sure the file is included in FormData
+    const fileInput = document.getElementById('profilePicInput');
+    if(fileInput.files.length > 0){
+        formData.set('profile_pic', fileInput.files[0]);
+    }
+
+    fetch('../config/save_employer_profile.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            showSuccessMessage();
+            if(data.profile_pic){
+                document.getElementById('profilePreview').src = '../' + data.profile_pic;
+            }
+        } else {
+            alert(data.error || 'An error occurred.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('An unexpected error occurred.');
+    });
+});
+
+// Profile picture preview
+document.getElementById('profilePicInput').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if(file){
+        const reader = new FileReader();
+        reader.onload = function(event){
+            document.getElementById('profilePreview').src = event.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+});
+//Lenght Description 
+document.getElementById('profileForm').addEventListener('submit', function(e){
+    const textarea = document.getElementById('companyDescription');
+    const charCount = textarea.value.trim().length;
+
+    if(charCount < 50){
+        e.preventDefault();
+        alert('Business Description must have at least 100 characters. Currently: ' + charCount);
+        textarea.focus();
+    }
+});
+</script>
+
 </body>
 </html>

@@ -92,7 +92,7 @@ $accountType = ucfirst($_SESSION['role']);
     <div class="col-lg-15">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="fw-bold"><i class="bi bi-clock-history me-2"></i> Recent Posted Jobs</h4>
-            <a href="#" class="text-decoration-none fw-bold">View All <i class="bi bi-arrow-right"></i></a>
+            <a href="manage_jobs.php" class="text-decoration-none fw-bold">View All <i class="bi bi-arrow-right"></i></a>
         </div>
 
         <?php if (!empty($recentJobs)): ?>
@@ -131,7 +131,7 @@ $accountType = ucfirst($_SESSION['role']);
     <div class="col-lg-15">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="fw-bold"><i class="bi bi-person-lines-fill me-2"></i> Recent Applicants</h4>
-            <a href="#" class="text-decoration-none fw-bold">View All <i class="bi bi-arrow-right"></i></a>
+            <a href="applicants.php" class="text-decoration-none fw-bold">View All <i class="bi bi-arrow-right"></i></a>
         </div>
 
         <?php if (!empty($recentApplicants)): ?>
