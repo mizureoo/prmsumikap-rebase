@@ -57,7 +57,7 @@ $jobs = $jobsStmt->fetchAll(PDO::FETCH_ASSOC);
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
 
 <!-- Favicon -->
-<link rel="icon" type="image/png" sizes="512x512" href="/prmsumikap/assets/images/favicon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/prmsumikap-rebase/assets/images/favicon.png">
 
 <!-- Custom CSS -->
 <link rel="stylesheet" href="../assets/css/layout.css">

@@ -1,7 +1,7 @@
 <?php include 'includes/header.php'; ?>
 <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link text-secondary" href="welcome_page.php">Home</a></li>
+          <li class="nav-item"><a class="nav-link text-secondary" href="index.php">Home</a></li>
           <li class="nav-item"><a class="nav-link text-secondary" href="pages/job_listing.php">Jobs</a></li>
           <li class="nav-item"><a class="nav-link text-secondary" href="pages/about.php">About</a></li>
           <li class="nav-item">

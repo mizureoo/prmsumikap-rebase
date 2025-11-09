@@ -15,7 +15,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Tab Icon -->
-  <link rel="icon" type="image/png" sizes="512x512" href="/prmsumikap/assets/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/images/favicon.png">
 
   <style>
     body {
@@ -50,8 +50,8 @@
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
     <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="/prmsumikap/welcome_page.php">
-      <img src="/prmsumikap/assets/images/PRMSUmikapLogo.png" alt="PRMSUmikap Logo" width="35" height="35" class="me-2" style="object-fit: contain;">
+    <a class="navbar-brand d-flex align-items-center" href="/prmsumikap-rebase/index.php">
+      <img src="/prmsumikap-rebase/assets/images/PRMSUmikapLogo.png" alt="PRMSUmikap Logo" width="35" height="35" class="me-2" style="object-fit: contain;">
       <span>PRMSUmikap</span>
     </a>
 
@@ -61,11 +61,11 @@
 
       <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="/prmsumikap/welcome_page.php">Home</a></li>
-          <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="/prmsumikap/jobs/job_search.php">Jobs</a></li>
-          <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="/prmsumikap/pages/about.php">About</a></li>
+          <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="/prmsumikap-rebase/index.php">Home</a></li>
+          <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="/prmsumikap-rebase/jobs/job_search.php">Jobs</a></li>
+          <li class="nav-item"><a class="nav-link text-secondary fw-semibold" href="/prmsumikap-rebase/pages/about.php">About</a></li>
           <li class="nav-item" style="padding-left: 50px;">
-            <a href="/prmsumikap/auth/login.php" class="btn btn-outline-primary me-2 fw-semibold" >Login</a>
+            <a href="/prmsumikap-rebase/auth/login.php" class="btn btn-outline-primary me-2 fw-semibold" >Login</a>
           </li>
         </ul>
       </div>

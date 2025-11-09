@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 unset($_SESSION['login_error']);
 
                 // Base URL configuration
-                $base_url = "http://localhost/prmsumikap";
+                $base_url = "http://localhost/prmsumikap-rebase";
 
                 // Role-based redirection
                 switch ($user['role']) {

@@ -115,7 +115,7 @@ $experience = $experienceStmt->fetchAll(PDO::FETCH_ASSOC);
 <title>Application Details | PRMSUmikap</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
-<link rel="icon" type="image/png" sizes="512x512" href="/prmsumikap/assets/images/favicon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/prmsumikap-rebase/assets/images/favicon.png">
 <link rel="stylesheet" href="../assets/css/layout.css">
 <link rel="stylesheet" href="../assets/css/sidebar.css">
 <style>
@@ -293,17 +293,69 @@ $experience = $experienceStmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <?php if(!empty($application['resume'])): ?>
+<?php if(!empty($application['resume'])): ?>
+    <?php
+    // Correct path to resumes directory
+    $resumePath = '../uploads/resumes/' . htmlspecialchars($application['resume']);
+    $fileExists = file_exists($resumePath);
+    $fileExtension = pathinfo($application['resume'], PATHINFO_EXTENSION);
+    
+    // Map file extensions to icons
+    $fileIcons = [
+        'pdf' => 'bi-file-earmark-pdf text-danger',
+        'doc' => 'bi-file-earmark-word text-primary',
+        'docx' => 'bi-file-earmark-word text-primary'
+    ];
+    $fileIcon = $fileIcons[$fileExtension] ?? 'bi-file-earmark-text text-secondary';
+    ?>
+    
     <div class="card border-0 shadow-sm">
         <div class="card-body text-center py-4">
-            <i class="bi bi-file-earmark-pdf fs-1 text-danger mb-3"></i>
-            <h5 class="fw-bold mb-3">Resume/CV</h5>
-            <a href="../<?= htmlspecialchars($application['resume']) ?>" class="btn btn-primary" download target="_blank">
-                <i class="bi bi-download me-2"></i>Download Resume
-            </a>
+            <i class="bi <?= $fileIcon ?> fs-1 mb-3"></i>
+            <h5 class="fw-bold mb-2">Applicant's Resume</h5>
+            <p class="text-muted mb-3 small">
+                <?= htmlspecialchars($application['resume']) ?>
+                <?php if(!$fileExists): ?>
+                    <span class="text-danger d-block mt-1">
+                        <i class="bi bi-exclamation-triangle"></i> File not found on server
+                    </span>
+                <?php endif; ?>
+            </p>
+            
+            <?php if($fileExists): ?>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="<?= $resumePath ?>" class="btn btn-primary" download>
+                        <i class="bi bi-download me-2"></i>Download
+                    </a>
+                    <a href="<?= $resumePath ?>" class="btn btn-outline-primary" target="_blank">
+                        <i class="bi bi-eye me-2"></i>View
+                    </a>
+                </div>
+            <?php else: ?>
+                <button class="btn btn-outline-secondary" disabled>
+                    <i class="bi bi-x-circle me-2"></i>File Unavailable
+                </button>
+                <?php
+                // Debug information (remove in production)
+                echo '<div class="mt-2 text-start small">';
+                echo '<strong>Debug info:</strong><br>';
+                echo 'Expected path: ' . $resumePath . '<br>';
+                echo 'File exists: ' . ($fileExists ? 'Yes' : 'No') . '<br>';
+                echo 'Resume value: ' . htmlspecialchars($application['resume']);
+                echo '</div>';
+                ?>
+            <?php endif; ?>
         </div>
     </div>
-    <?php endif; ?>
+<?php else: ?>
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-4">
+            <i class="bi bi-file-earmark-x fs-1 text-muted mb-3"></i>
+            <h5 class="fw-bold mb-2 text-muted">No Resume Submitted</h5>
+            <p class="text-muted small">The applicant hasn't uploaded a resume yet.</p>
+        </div>
+    </div>
+<?php endif; ?>
 
 </div>
 
