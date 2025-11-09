@@ -6,7 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Collect form data
+// Collect and validate form data
 $student_number = trim(filter_input(INPUT_POST, 'student_number', FILTER_SANITIZE_SPECIAL_CHARS));
 $name = trim(filter_input(INPUT_POST, 'name', FILTER_SANITIZE_SPECIAL_CHARS));
 $course = trim(filter_input(INPUT_POST, 'course', FILTER_SANITIZE_SPECIAL_CHARS));
@@ -16,18 +16,38 @@ $password = $_POST['password'] ?? '';
 $confirm_password = $_POST['confirm_password'] ?? '';
 $role = $_POST['role'] ?? '';
 
-if (empty($student_number) || empty($name) || empty($course) || empty($year_level) || !$email || empty($password) || empty($confirm_password) || $role !== 'student') {
-    header('Location: ../auth/student_register.php?error=' . urlencode('Please fill in all required fields correctly.'));
-    exit;
+// Enhanced validation
+$errors = [];
+
+if (empty($student_number)) $errors[] = 'Student number is required';
+if (empty($name)) $errors[] = 'Full name is required';
+if (empty($course)) $errors[] = 'Course is required';
+if (empty($year_level)) $errors[] = 'Year level is required';
+if (!$email) $errors[] = 'Valid email is required';
+if (empty($password)) $errors[] = 'Password is required';
+if ($role !== 'student') $errors[] = 'Invalid role';
+
+// Check for duplicate student number (ADDED)
+if (!empty($student_number)) {
+    $check_student_stmt = $pdo->prepare("SELECT COUNT(*) FROM students_profile WHERE student_number = ?");
+    $check_student_stmt->execute([$student_number]);
+    if ($check_student_stmt->fetchColumn() > 0) {
+        $errors[] = 'This student number is already registered';
+    }
 }
 
 if ($password !== $confirm_password) {
-    header('Location: ../auth/student_register.php?error=' . urlencode('Passwords do not match.'));
-    exit;
+    $errors[] = 'Passwords do not match';
 }
 
 if (strlen($password) < 8) {
-    header('Location: ../auth/student_register.php?error=' . urlencode('Password must be at least 8 characters long.'));
+    $errors[] = 'Password must be at least 8 characters long';
+}
+
+// If there are validation errors, redirect with errors
+if (!empty($errors)) {
+    $errorString = implode(', ', $errors);
+    header('Location: ../auth/student_register.php?error=' . urlencode($errorString));
     exit;
 }
 
@@ -36,28 +56,35 @@ $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 try {
     $pdo->beginTransaction();
 
+    // Check for duplicate email
     $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
     $check_stmt->execute([$email]);
     if ($check_stmt->fetchColumn() > 0) {
-        $pdo->rollBack();
-        header('Location: ../auth/student_register.php?error=' . urlencode('This email is already registered.'));
-        exit;
+        throw new Exception('This email is already registered.');
     }
 
+    // Insert into users table
     $insert_user_stmt = $pdo->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
     $insert_user_stmt->execute([$name, $email, $hashed_password, $role]);
     $user_id = $pdo->lastInsertId();
 
+    // Insert into students_profile table
     $insert_profile_stmt = $pdo->prepare("INSERT INTO students_profile (user_id, student_number, course, year_level) VALUES (?, ?, ?, ?)");
     $insert_profile_stmt->execute([$user_id, $student_number, $course, $year_level]);
 
     $pdo->commit();
 
+    // Redirect to login with success message
     header('Location: ../auth/login.php?success=' . urlencode('Registration successful! You can now log in.'));
     exit;
 
 } catch (PDOException $e) {
     $pdo->rollBack();
-    header('Location: ../auth/student_register.php?error=' . urlencode('A database error occurred: ' . $e->getMessage()));
+    error_log("Registration PDO Error: " . $e->getMessage()); // Log the error
+    header('Location: ../auth/student_register.php?error=' . urlencode('A database error occurred. Please try again.'));
+    exit;
+} catch (Exception $e) {
+    $pdo->rollBack();
+    header('Location: ../auth/student_register.php?error=' . urlencode($e->getMessage()));
     exit;
 }

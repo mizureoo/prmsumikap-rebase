@@ -20,7 +20,7 @@ if (!$employerProfile) {
 
 $employer_id = $employerProfile['employer_id'];
 
-// Fetch all applications for this employer's jobs
+// Fetch all applications for this employer's jobs - FIXED JOIN
 $stmt = $pdo->prepare("
     SELECT 
         applications.application_id,
@@ -30,7 +30,8 @@ $stmt = $pdo->prepare("
         applications.status,
         applications.date_applied
     FROM applications
-    JOIN users ON applications.student_id = users.user_id
+    JOIN students_profile ON applications.student_id = students_profile.student_id
+    JOIN users ON students_profile.user_id = users.user_id
     JOIN jobs ON applications.job_id = jobs.job_id
     WHERE jobs.employer_id = ?
     ORDER BY applications.date_applied DESC
@@ -94,6 +95,7 @@ $jobs = $jobsStmt->fetchAll(PDO::FETCH_ASSOC);
                   <select class="form-select" id="statusFilter">
                       <option value="">All Statuses</option>
                       <option value="Pending">Pending</option>
+                      <option value="Shortlisted">Shortlisted</option>
                       <option value="Accepted">Accepted</option>
                       <option value="Rejected">Rejected</option>
                   </select>
@@ -142,7 +144,7 @@ $jobs = $jobsStmt->fetchAll(PDO::FETCH_ASSOC);
               <td><?= htmlspecialchars($row['job_title']) ?></td>
               <td>
                 <span class="badge bg-<?= 
-                  $row['status'] === 'Accepted' ? 'success' : 
+                  $row['status'] === 'Shortlisted' ? 'success' : 
                   ($row['status'] === 'Rejected' ? 'danger' : 'warning') ?>">
                   <?= htmlspecialchars($row['status']) ?>
                 </span>

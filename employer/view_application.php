@@ -9,7 +9,6 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'employer') {
 
 include __DIR__ . '/../database/prmsumikap_db.php';
 
-$employer_id = $_SESSION['user_id'];
 $application_id = $_GET['id'] ?? null;
 
 if (!$application_id) {
@@ -17,14 +16,14 @@ if (!$application_id) {
     exit;
 }
 
-// Handle status update
+// Handle status update - UPDATED: Now includes 'accept'
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
     $new_status = '';
 
     switch ($action) {
         case 'shortlist': $new_status = 'Shortlisted'; break;
-        case 'accept': $new_status = 'Accepted'; break;
+        case 'accept': $new_status = 'Accepted'; break;  // Now included
         case 'reject': $new_status = 'Rejected'; break;
     }
 
@@ -42,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
+// Get employer_id from employers_profile
 $stmt = $pdo->prepare("SELECT employer_id FROM employers_profile WHERE user_id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $employerProfile = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -54,7 +54,7 @@ if (!$employerProfile) {
 
 $employer_id = $employerProfile['employer_id'];
 
-// Fetch application details along with student, job, and employer info
+// Fetch application details - FIXED JOIN and added resume field
 $stmt = $pdo->prepare("
     SELECT 
         applications.application_id,
@@ -66,6 +66,8 @@ $stmt = $pdo->prepare("
         users.email,
         students_profile.phone,
         students_profile.address,
+        students_profile.resume,  -- Added resume field
+        students_profile.user_id as student_user_id,  -- Important for education/experience queries
         jobs.job_title,
         jobs.job_location,
         jobs.min_salary,
@@ -73,8 +75,8 @@ $stmt = $pdo->prepare("
         jobs.job_type,
         employers_profile.company_name
     FROM applications
-    JOIN users ON applications.student_id = users.user_id
-    LEFT JOIN students_profile ON applications.student_id = students_profile.student_id
+    JOIN students_profile ON applications.student_id = students_profile.student_id  -- FIXED
+    JOIN users ON students_profile.user_id = users.user_id  -- FIXED
     JOIN jobs ON applications.job_id = jobs.job_id
     JOIN employers_profile ON jobs.employer_id = employers_profile.employer_id
     WHERE applications.application_id = ?
@@ -89,19 +91,20 @@ if (!$application) {
     exit;
 }
 
-$studentId = $application['student_id'];
+// Use student's user_id for education/experience queries - FIXED
+$studentUserId = $application['student_user_id'];
 
 // Fetch additional student info
 $skillsStmt = $pdo->prepare("SELECT skill_name FROM student_skills WHERE user_id = ?");
-$skillsStmt->execute([$studentId]);
+$skillsStmt->execute([$studentUserId]);
 $skills = $skillsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $educationStmt = $pdo->prepare("SELECT * FROM student_education WHERE user_id = ? ORDER BY end_year DESC");
-$educationStmt->execute([$studentId]);
+$educationStmt->execute([$studentUserId]);
 $education = $educationStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $experienceStmt = $pdo->prepare("SELECT * FROM student_experience WHERE user_id = ? ORDER BY end_year DESC");
-$experienceStmt->execute([$studentId]);
+$experienceStmt->execute([$studentUserId]);
 $experience = $experienceStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
@@ -161,51 +164,55 @@ $experience = $experienceStmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
             <span class="badge status-badge-large bg-<?= 
                 $application['status'] === 'Accepted' ? 'success' : 
-                ($application['status'] === 'Rejected' ? 'danger' : 
-                ($application['status'] === 'Shortlisted' ? 'info' : 'warning')) ?>">
+                ($application['status'] === 'Shortlisted' ? 'info' : 
+                ($application['status'] === 'Rejected' ? 'danger' : 'warning')) ?>">
                 <?= htmlspecialchars($application['status']) ?>
             </span>
         </div>
     </div>
 
-    <!-- Action Buttons -->
-     <div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-        <h5 class="fw-bold mb-3">Update Application Status</h5>
-        <div class="d-flex flex-wrap gap-2">
-            <?php foreach(['shortlist'=>'Shortlisted','accept'=>'Accepted','reject'=>'Rejected'] as $key=>$status): ?>
-                <!-- Button triggers modal -->
-                <button type="button" class="btn btn-<?= $key==='shortlist'?'info':($key==='accept'?'success':'danger') ?> action-btn" 
-                    data-bs-toggle="modal" data-bs-target="#confirmModal<?= $key ?>"
-                    <?= $application['status']==$status?'disabled':'' ?>>
-                    <i class="bi bi-<?= $key==='shortlist'?'star':'check-circle' ?> me-1"></i> <?= $status ?>
-                </button>
+    <!-- Action Buttons - UPDATED: Now includes 'accept' -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3">Update Application Status</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <?php foreach([
+                    'shortlist' => ['Shortlisted', 'info', 'star'],
+                    'accept' => ['Accepted', 'success', 'check-circle'],
+                    'reject' => ['Rejected', 'danger', 'x-circle']
+                ] as $key => [$status, $color, $icon]): ?>
+                    
+                    <button type="button" class="btn btn-<?= $color ?> action-btn" 
+                        data-bs-toggle="modal" data-bs-target="#confirmModal<?= $key ?>"
+                        <?= $application['status']==$status?'disabled':'' ?>>
+                        <i class="bi bi-<?= $icon ?> me-1"></i> <?= $status ?>
+                    </button>
 
-                <!-- Modal -->
-                <div class="modal fade" id="confirmModal<?= $key ?>" tabindex="-1" aria-labelledby="confirmModalLabel<?= $key ?>" aria-hidden="true">
-                  <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                      <div class="modal-header">
-                        <h5 class="modal-title" id="confirmModalLabel<?= $key ?>">Confirm <?= $status ?></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                      </div>
-                      <div class="modal-body">
-                        Are you sure you want to mark this application as <strong><?= $status ?></strong>?
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <form method="POST" class="d-inline">
-                            <input type="hidden" name="action" value="<?= $key ?>">
-                            <button type="submit" class="btn btn-<?= $key==='shortlist'?'info':($key==='accept'?'success':'danger') ?>">Yes, <?= $status ?></button>
-                        </form>
+                    <!-- Modal -->
+                    <div class="modal fade" id="confirmModal<?= $key ?>" tabindex="-1" aria-labelledby="confirmModalLabel<?= $key ?>" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="confirmModalLabel<?= $key ?>">Confirm <?= $status ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            Are you sure you want to mark this application as <strong><?= $status ?></strong>?
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <form method="POST" class="d-inline">
+                                <input type="hidden" name="action" value="<?= $key ?>">
+                                <button type="submit" class="btn btn-<?= $color ?>">Yes, <?= $status ?></button>
+                            </form>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
         </div>
     </div>
-</div>
 
     <div class="row">
         <!-- Left Column: Student Info -->
@@ -257,10 +264,10 @@ $experience = $experienceStmt->fetchAll(PDO::FETCH_ASSOC);
                     <h5 class="section-title fw-bold">Education</h5>
                     <?php foreach($education as $edu): ?>
                         <div class="mb-3 pb-3 <?= $edu !== end($education)?'border-bottom':'' ?>">
-                            <h6 class="fw-bold mb-1"><?= htmlspecialchars($edu['degree']) ?></h6>
+                            <h6 class="fw-bold mb-1"><?= htmlspecialchars($edu['degree'] ?? 'No degree specified') ?></h6>
                             <div class="text-primary mb-1"><?= htmlspecialchars($edu['school_name']) ?></div>
                             <div class="text-muted small"><?= htmlspecialchars($edu['start_year']) ?> - <?= !empty($edu['end_year'])?htmlspecialchars($edu['end_year']):'Present' ?></div>
-                            <?php if(!empty($edu['field_of_study'])): ?><div class="text-muted small">Field: <?= htmlspecialchars($edu['field_of_study']) ?></div><?php endif; ?>
+                            <?php if(!empty($edu['honors'])): ?><div class="text-muted small">Honors: <?= htmlspecialchars($edu['honors']) ?></div><?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -273,9 +280,9 @@ $experience = $experienceStmt->fetchAll(PDO::FETCH_ASSOC);
                     <h5 class="section-title fw-bold">Work Experience</h5>
                     <?php foreach($experience as $exp): ?>
                         <div class="mb-3 pb-3 <?= $exp !== end($experience)?'border-bottom':'' ?>">
-                            <h6 class="fw-bold mb-1"><?= htmlspecialchars($exp['job_title']) ?></h6>
+                            <h6 class="fw-bold mb-1"><?= htmlspecialchars($exp['position'] ?? 'No position specified') ?></h6>
                             <div class="text-primary mb-1"><?= htmlspecialchars($exp['company_name']) ?></div>
-                            <div class="text-muted small mb-2"><?= date('M Y', strtotime($exp['start_date'])) ?> - <?= $exp['end_date']?date('M Y', strtotime($exp['end_date'])):'Present' ?></div>
+                            <div class="text-muted small mb-2"><?= htmlspecialchars($exp['start_year']) ?> - <?= !empty($exp['end_year'])?htmlspecialchars($exp['end_year']):'Present' ?></div>
                             <?php if(!empty($exp['description'])): ?><p class="text-muted small mb-0"><?= htmlspecialchars($exp['description']) ?></p><?php endif; ?>
                         </div>
                     <?php endforeach; ?>
@@ -286,12 +293,12 @@ $experience = $experienceStmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
-    <?php if(!empty($application['resume_path'])): ?>
+    <?php if(!empty($application['resume'])): ?>
     <div class="card border-0 shadow-sm">
         <div class="card-body text-center py-4">
             <i class="bi bi-file-earmark-pdf fs-1 text-danger mb-3"></i>
             <h5 class="fw-bold mb-3">Resume/CV</h5>
-            <a href="<?= htmlspecialchars($application['resume_path']) ?>" class="btn btn-primary" download target="_blank">
+            <a href="../<?= htmlspecialchars($application['resume']) ?>" class="btn btn-primary" download target="_blank">
                 <i class="bi bi-download me-2"></i>Download Resume
             </a>
         </div>
