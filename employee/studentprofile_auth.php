@@ -78,12 +78,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // RESUME UPLOAD 
         if(isset($_FILES['resume']) && $_FILES['resume']['error'] === UPLOAD_ERR_OK){
-            $uploadDir = '../uploads/resumes/';
-            if(!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-            $filename = $studentId . '_' . time() . '_' . basename($_FILES['resume']['name']);
-            if(move_uploaded_file($_FILES['resume']['tmp_name'], $uploadDir . $filename)){
-                $stmt = $pdo->prepare("UPDATE students_profile SET resume=? WHERE user_id=?");
-                $stmt->execute([$filename, $studentId]);
+            // Use this path - it's the most reliable
+            $uploadDir = __DIR__ . '/../uploads/resumes/';
+            
+            if(!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            
+            $allowedExtensions = ['pdf', 'doc', 'docx'];
+            $fileExtension = strtolower(pathinfo($_FILES['resume']['name'], PATHINFO_EXTENSION));
+            
+            if(in_array($fileExtension, $allowedExtensions)) {
+                $filename = $studentId . '_' . time() . '.' . $fileExtension;
+                $uploadPath = $uploadDir . $filename;
+                
+                if(move_uploaded_file($_FILES['resume']['tmp_name'], $uploadPath)){
+                    $stmt = $pdo->prepare("UPDATE students_profile SET resume=? WHERE user_id=?");
+                    $stmt->execute([$filename, $studentId]);
+                }
             }
         }
         // Skills - Delete and reinsert

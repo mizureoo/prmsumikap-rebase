@@ -274,22 +274,42 @@
 <div class="card border-0 shadow-sm mb-4">
   <div class="card-body px-4">
     <h6 class="fw-bold mb-3"><i class="bi bi-file-earmark-text me-2"></i>Resume</h6>
-    <label class="d-block p-5 border border-dashed rounded text-center cursor-pointer" id="resumeUploadLabel">
+    
+    <label class="d-block p-5 border border-dashed rounded text-center cursor-pointer" id="resumeUploadLabel" style="border-color: #dee2e6;">
       <i class="bi bi-upload display-4 text-muted"></i>
       <p class="mt-2 mb-0">Upload your resume</p>
       <small class="text-muted">PDF, DOC, DOCX up to 10MB</small>
       <input type="file" accept=".pdf,.doc,.docx" class="d-none" name="resume" id="resumeInput">
     </label>
+    
+    <!-- Unsaved file alert - initially hidden -->
+    <div class="mt-3 p-3 alert alert-warning d-none" id="unsavedResumeAlert">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div class="flex-grow-1">
+          <strong>Resume ready to save</strong>
+          <div class="small" id="unsavedFileName"></div>
+        </div>
+        <span class="badge bg-warning text-dark">Unsaved</span>
+      </div>
+    </div>
+    
     <?php if(!empty($profile['resume'])): ?>
-      <div class="mt-3 p-3 bg-light rounded">
+      <div class="mt-3 p-3 bg-light rounded" id="currentResumeSection">
         <i class="bi bi-file-earmark-text me-2"></i>
         <strong>Current resume:</strong> 
-        <a href="../uploads/resumes/<?= htmlspecialchars($profile['resume']) ?>" target="_blank" class="ms-2">
-          <?= htmlspecialchars($profile['resume']) ?>
-        </a>
-        <a href="../uploads/resumes/<?= htmlspecialchars($profile['resume']) ?>" download class="btn btn-sm btn-outline-primary ms-2">
-          <i class="bi bi-download me-1"></i>Download
-        </a>
+        <?php
+        $resumePath = '../uploads/resumes/' . htmlspecialchars($profile['resume']);
+        if(file_exists($resumePath)): ?>
+          <a href="<?= $resumePath ?>" target="_blank" class="ms-2">
+            <?= htmlspecialchars($profile['resume']) ?>
+          </a>
+          <a href="<?= $resumePath ?>" download class="btn btn-sm btn-outline-primary ms-2">
+            <i class="bi bi-download me-1"></i>Download
+          </a>
+        <?php else: ?>
+          <span class="text-danger ms-2">File not found (<?= htmlspecialchars($profile['resume']) ?>)</span>
+        <?php endif; ?>
       </div>
     <?php endif; ?>
   </div>
@@ -519,49 +539,56 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Resume upload handler function
-    function handleResumeUpload(e) {
-        if (e.target.files && e.target.files[0]) {
-            const fileName = e.target.files[0].name;
-            const resumeLabel = document.getElementById('resumeUploadLabel');
-            
-            resumeLabel.innerHTML = `
-                <i class="bi bi-file-earmark-check display-4 text-success"></i>
-                <p class="mt-2 mb-1 fw-semibold">Resume Ready</p>
-                <small class="text-muted">Selected file: ${fileName}</small>
-                <br><small class="text-muted">Click to change file</small>
-                <input type="file" accept=".pdf,.doc,.docx" class="d-none" name="resume" id="resumeInput">
-            `;
-            
-            const resumeFilename = document.createElement('div');
-            resumeFilename.className = 'resume-filename mt-3';
-            resumeFilename.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <i class="bi bi-file-earmark-text me-2"></i>
-                        <span>New resume: ${fileName}</span>
-                    </div>
-                    <small class="text-muted">Will replace current file when saved</small>
-                </div>
-            `;
-            
-            const existingTemp = document.querySelector('.resume-filename.mt-3');
-            if (existingTemp) {
-                existingTemp.remove();
-            }
-            
-            resumeLabel.parentNode.insertBefore(resumeFilename, resumeLabel.nextSibling);
-            
-            // Re-attach event listener to the new input
-            document.getElementById('resumeInput').addEventListener('change', handleResumeUpload);
-        }
+// Update resume upload handler
+function handleResumeUpload(e) {
+    const fileInput = e.target;
+    const fileName = fileInput.files[0]?.name;
+    const fileSize = (fileInput.files[0]?.size / (1024 * 1024)).toFixed(2); // MB
+    const resumeLabel = document.getElementById('resumeUploadLabel');
+    const unsavedAlert = document.getElementById('unsavedResumeAlert');
+    const unsavedFileName = document.getElementById('unsavedFileName');
+    const currentResumeSection = document.getElementById('currentResumeSection');
+    
+    // Validate file
+    const validationError = validators.fileType(fileInput.value, fileInput);
+    
+    if (validationError) {
+        alert(validationError);
+        fileInput.value = '';
+        return;
     }
+    
+    if (fileInput.files && fileInput.files[0]) {
+        // Update the upload label to show success state
+        resumeLabel.innerHTML = `
+            <i class="bi bi-file-earmark-check display-4 text-success"></i>
+            <p class="mt-2 mb-1 fw-semibold text-success">Resume Selected</p>
+            <small class="text-muted d-block">${fileName}</small>
+            <small class="text-muted">${fileSize} MB • Click to change</small>
+            <input type="file" accept=".pdf,.doc,.docx" class="d-none" name="resume" id="resumeInput">
+        `;
+        
+        // Update the unsaved alert
+        unsavedFileName.textContent = `${fileName} (${fileSize} MB) - Click "Save Changes" to finalize`;
+        unsavedAlert.classList.remove('d-none');
+        
+        // Hide the current resume section since we're replacing it
+        if (currentResumeSection) {
+            currentResumeSection.style.display = 'none';
+        }
+        
+        // Change border color to indicate success
+        resumeLabel.classList.remove('border-dashed');
+        resumeLabel.classList.add('border-solid', 'border-success', 'border-2');
+        
+        // Re-attach the file input
+        const newInput = resumeLabel.querySelector('#resumeInput');
+        newInput.addEventListener('change', handleResumeUpload);
+    }
+}
 
-    document.getElementById('resumeUploadLabel').addEventListener('click', function() {
-        document.getElementById('resumeInput').click();
-    });
-
-    document.getElementById('resumeInput').addEventListener('change', handleResumeUpload);
+// Initialize the file input event listener
+document.getElementById('resumeInput').addEventListener('change', handleResumeUpload);
 
     // === SKILL MANAGEMENT ===
     document.getElementById('add-skill').addEventListener('click', function() {
