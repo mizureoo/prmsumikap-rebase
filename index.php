@@ -1,7 +1,7 @@
 <?php include 'includes/header.php'; ?>
 <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
         <ul class="navbar-nav mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link text-secondary" href="index.php">Home</a></li>
+          <li class="nav-item"><a class="nav-link text-secondary" href="welcome_page.php">Home</a></li>
           <li class="nav-item"><a class="nav-link text-secondary" href="pages/job_listing.php">Jobs</a></li>
           <li class="nav-item"><a class="nav-link text-secondary" href="pages/about.php">About</a></li>
           <li class="nav-item">
@@ -19,13 +19,17 @@
         A web-based platform for PRMSU students to find part-time jobs that fit their skills and academic schedules.
       </p>
 
-      <!-- Search Bar Section -->
-      <div class="d-flex justify-content-center mt-4 mb-5">
-        <div class="d-flex w-75 justify-content-center" style="max-width: 600px; gap: 10px;">
-          <input type="text" class="form-control border-primary rounded px-3" placeholder="Search for jobs, skills, or locations..." aria-label="Search">
-          <button class="btn btn-primary fw-semibold rounded px-4" type="button">Search</button>
-        </div>
-      </div>
+          <!-- 🔍 Search Bar -->
+  <div class="d-flex justify-content-center mt-4 mb-5">
+    <div class="d-flex w-75 justify-content-center" style="max-width: 600px; gap: 10px;">
+      <input id="searchInput" type="text" class="form-control border-primary rounded px-3" 
+            placeholder="Search for jobs, skills, or locations..." aria-label="Search">
+      <button id="searchBtn" class="btn btn-primary fw-semibold rounded px-4" type="button">Search</button>
+    </div>
+  </div>
+
+  <!-- 📋 Results Container -->
+  <div id="jobContainer" class="d-flex flex-column align-items-center gap-3"></div>
 
       <div class="mt-3">
         <a href="auth/student_register.php" class="btn btn-primary fw-semibold me-2">I'm a Student</a>
@@ -99,5 +103,54 @@
     </div>
   </div>
 </div>
+
+<!-- ⚙️ AJAX Script -->
+<script>
+(function() {
+  const searchInput = document.getElementById('searchInput');
+  const searchBtn = document.getElementById('searchBtn');
+  const jobContainer = document.getElementById('jobContainer');
+
+  // Function to perform AJAX search
+  function performSearch() {
+    const query = searchInput.value.trim();
+
+    // Do nothing if search input is empty
+    if (query === '') {
+      jobContainer.innerHTML = ''; // clear results
+      return;
+    }
+
+    // Show loading state
+    jobContainer.innerHTML = '<p class="text-muted">Loading...</p>';
+
+    fetch('jobs/fetch_jobs.php?search=' + encodeURIComponent(query))
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not OK');
+        return response.text();
+      })
+      .then(html => {
+        jobContainer.innerHTML = html;
+      })
+      .catch(error => {
+        console.error(error);
+        jobContainer.innerHTML = '<p class="text-danger">Error loading jobs. Check console/network.</p>';
+      });
+  }
+
+  // Search button click
+  searchBtn.addEventListener('click', performSearch);
+
+  // Press Enter in input triggers search
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performSearch();
+    }
+  });
+
+  // Do NOT load jobs on page load
+})();
+</script>
 
 <?php include 'includes/footer.php'; ?>

@@ -12,7 +12,7 @@
     ?>
 
     <form method="POST" action="../config/reset_password_request.php">
-        <div class="mb-3">
+        <div class="mb-3 " >
             <label for="email" class="form-label">Enter your email</label>
             <input type="email" class="form-control" id="email" name="email" required autofocus>
         </div>
