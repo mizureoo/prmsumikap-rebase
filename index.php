@@ -23,7 +23,7 @@
   <div class="d-flex justify-content-center mt-4 mb-5">
     <div class="d-flex w-75 justify-content-center" style="max-width: 600px; gap: 10px;">
       <input id="searchInput" type="text" class="form-control border-primary rounded px-3" 
-            placeholder="Search for jobs, skills, or locations..." aria-label="Search">
+            placeholder="Search for jobs or locations..." aria-label="Search">
       <button id="searchBtn" class="btn btn-primary fw-semibold rounded px-4" type="button">Search</button>
     </div>
   </div>
